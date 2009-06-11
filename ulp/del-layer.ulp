@@ -1,0 +1,193 @@
+// Delete-Layer
+// An Eagle script to delete all objects in a user-specified layer.
+//
+// Stolen liberally from cmd-change-swap-layer.ulp
+//
+// Jon Nall
+// 10Jun2009
+
+#usage "en: Delete Layer\n"
+       "An Eagle script to delete all objects in a user-specified layer\n"
+       "Usage: RUN sample.ulp <layer_number>\n"
+       "Author: jon.nall@gmail.com\n"
+
+int isLayer = -1;
+string preamble = "GRID mm;";
+string cmdripup = "";
+string postamble = "";
+
+enum   { type_wire, type_polygon };
+
+void delete(real x, real y, int type)
+{
+    string c;
+    if (isLayer > 16)
+    {
+        sprintf(c, "DELETE (S%.4f %.4f);\n ", x, y);
+        cmdripup += c;
+    }
+    else
+    {
+        if (type == type_polygon)
+        {
+            sprintf(c, "DELETE (S%.4f %.4f);\n", x, y );
+            cmdripup += c;
+        }
+        else
+        {
+            sprintf(c, "RIPUP (%.4f %.4f);\n", x, y );
+            cmdripup += c;
+        }
+    }
+    return;
+}
+
+
+void del_layer(int isLayer)
+{
+  real dx, dy;
+  board(B) {
+    B.signals(S) {
+      S.wires(W) {
+        if (W.layer == isLayer) {
+          delete(u2mm(W.x1 + W.x2) / 2, u2mm(W.y1 + W.y2) / 2, type_wire);
+        }
+      }
+      S.polygons(P) {
+        if (P.layer == isLayer) {
+          int first = 1;
+          P.wires(W) {
+            if (first) {
+              dx = u2mm(W.x1);
+              dy = u2mm(W.y1);
+              delete(dx, dy, type_polygon);
+              first = 0;
+            }
+          }
+        }
+      }
+    }
+    B.wires(W) {
+      if (W.layer == isLayer) {
+        delete(u2mm(W.x1 + W.x2) / 2, u2mm(W.y1 + W.y2) / 2, type_wire);
+      }
+    }
+    B.polygons(P) {
+      if (P.layer == isLayer) {
+        int first = 1;
+        P.wires(W) {
+          if (first) {
+            dx = u2mm(W.x1);
+            dy = u2mm(W.y1);
+            delete(dx, dy, type_polygon);
+            first = 0;
+          }
+        }
+      }
+    }
+    B.circles(C) {
+      if (C.layer == isLayer) {
+        dx = u2mm(C.x + C.radius);
+        dy = u2mm(C.y);
+        delete(dx, dy, type_polygon);
+      }
+    }
+    B.rectangles(R) {
+      if (R.layer == isLayer) {
+        dx = u2mm(R.x1);
+        dy = u2mm(R.y1);
+        delete(dx, dy, type_polygon);
+      }
+    }
+    B.texts(T) {
+      if (T.layer == isLayer) {
+        dx = u2mm(T.x);
+        dy = u2mm(T.y);
+        delete(dx, dy, type_polygon);
+      }
+    }
+  }
+  return;
+}
+
+if(argc < 2)
+{
+    dlgMessageBox(":Must specify at least one layer");
+    exit("");
+}
+else
+{
+    int i;
+    for(i = 1; i < argc; ++i)
+    {
+        board(B)
+        {
+            int found = 0;
+            B.layers(L)
+            {
+                if(L.number == strtol(argv[i]))
+                {
+                    if(L.visible == 0)
+                    {
+                        string msg;
+                        sprintf(msg, ":Can't delete hidden layer: %s", argv[i]);
+                        dlgMessageBox(msg);
+                        exit("");                    
+                    }
+                    
+                    found = 1;
+                }
+            }
+            
+            if(found == 0)
+            {
+                string msg;
+                sprintf(msg, ":Unknown layer: %s", argv[i]);
+                dlgMessageBox(msg);
+                exit("");
+            }
+        }
+    }
+    
+    // If we make it here, we have valid arguments
+    
+    // We convert to mm in this script so save the old units and change back
+    // afterwards
+    int prevGrid;
+    board(B)
+    {
+        prevGrid = B.grid.unit;
+    }
+        
+    string oldUnit = "";
+    if(prevGrid == GRID_UNIT_MIC)
+    {
+        oldUnit = "mic";
+    }
+    else if(prevGrid == GRID_UNIT_MM)
+    {
+        oldUnit = "mm";
+    }
+    else if(prevGrid == GRID_UNIT_MIL)
+    {
+        oldUnit = "mil";
+    }
+    else if(prevGrid == GRID_UNIT_INCH)
+    {
+        oldUnit = "inch";
+    }
+    sprintf(postamble, "GRID %s;", oldUnit);
+    
+    for(i = 1; i <= argc; ++i)
+    {
+        isLayer = strtol(argv[i]);
+        del_layer(isLayer);
+        output("/Users/nall/output.log", "t")
+        {
+            printf("CMD: [%s]\n", cmdripup);
+        }
+        exit(preamble + cmdripup + postamble);    
+    }
+    
+}
+
