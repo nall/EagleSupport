@@ -2,3 +2,18 @@ Library and Scripts for use with Cadsoft Eagle
 
 Download Eagle:
 http://www.cadsoftusa.com
+
+Library Parts:
+    * IC's
+        * Texas Instruments SN74ALVTH16244GR TTL <-> LVTTL 16-way Buffer
+        * Atmel AT90USB647
+        * Diodes, Inc. AP21x1 USB Current Limiting Switch
+    * Connectors
+        * USB Female Type A Through Hole
+        * DB9 ("sandwich" package)
+        * Hirose FX-2 100 Pin Connector
+        * 0.1" Headers
+            * 32x1
+            * 20x2
+            * 16x1
+    
