@@ -3,6 +3,12 @@ Library and Scripts for use with Cadsoft Eagle
 Download Eagle:
 http://www.cadsoftusa.com
 
+User Language Programs
+    * del-layer.ulp - Deletes all objects in the specified layer(s)
+
+Scripts
+    * tssop48.scr - Generate a TSSOP48 package
+
 Library Parts:
     * IC's
         * Texas Instruments SN74ALVTH16244GR TTL <-> LVTTL 16-way Buffer
